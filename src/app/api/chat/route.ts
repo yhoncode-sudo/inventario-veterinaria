@@ -52,17 +52,18 @@ Total de productos: ${productos?.length || 0}`;
         { role: "system", content: systemPrompt },
         { role: "user", content: mensaje },
       ],
-      model: "llama-3.1-8b-instant",
+      model: "openai/gpt-oss-20b",
       temperature: 0.3,
       max_tokens: 1024,
     });
 
     const respuesta = chatCompletion.choices[0]?.message?.content || "No pude procesar tu consulta.";
+
     return NextResponse.json({ respuesta });
   } catch (error: any) {
-    console.error("Error en chat:", error);
+    console.error("Error en chat:", error?.message || error);
     return NextResponse.json(
-      { respuesta: "Hubo un error al procesar tu consulta. Verifica que la API key de Groq esté configurada." },
+      { respuesta: `Error: ${error?.message || "desconocido"}` },
       { status: 500 }
     );
   }
