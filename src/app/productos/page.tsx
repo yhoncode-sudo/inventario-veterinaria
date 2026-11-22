@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase, type Producto, type Categoria } from "@/lib/supabase";
 
 export default function ProductosPage() {
@@ -65,7 +66,12 @@ export default function ProductosPage() {
                 {producto.imagen_url ? (<img src={producto.imagen_url} alt={producto.nombre} className="w-full h-full object-cover" />) : (<span className="text-2xl opacity-30">📷</span>)}
               </div>
               <div className="flex-1 p-3 min-w-0">
-                <h3 className="font-semibold text-sm leading-tight truncate">{producto.nombre}</h3>
+                <div className="flex items-start justify-between gap-1">
+                  <h3 className="font-semibold text-sm leading-tight truncate flex-1">{producto.nombre}</h3>
+                  <Link href={`/productos/editar?id=${producto.id}`} className="text-[var(--primary)] text-xs px-2 py-0.5 rounded-lg bg-[var(--primary-light)] flex-shrink-0">
+                    Editar
+                  </Link>
+                </div>
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--primary-light)] text-[var(--primary)]">{(producto as any).categorias?.icono} {(producto as any).categorias?.nombre}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${producto.ubicacion === "mostrador" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>{producto.ubicacion === "mostrador" ? "🏪" : "🏭"} {producto.ubicacion}</span>
