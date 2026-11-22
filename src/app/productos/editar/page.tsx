@@ -1,10 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase, type Categoria } from "@/lib/supabase";
 
-export default function EditarProductoPage() {
+function EditarForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -159,5 +160,13 @@ export default function EditarProductoPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function EditarProductoPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="text-[var(--muted)]">Cargando...</div></div>}>
+      <EditarForm />
+    </Suspense>
   );
 }
