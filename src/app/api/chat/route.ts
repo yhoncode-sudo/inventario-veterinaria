@@ -19,11 +19,19 @@ export async function POST(req: NextRequest) {
     const groq = getGroq();
     const supabase = getSupabase();
 
-    const { data: productos } = await supabase
+    // Fetch all products with categories
+    const { data: productos, error: dbError } = await supabase
       .from("productos")
       .select("*, categorias(nombre, icono)")
       .order("nombre");
 
+    // Log debug info
+    const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "NO URL";
+    console.log(`[CHAT DEBUG] Supabase URL: ${supaUrl.substring(0, 35)}...`);
+    console.log(`[CHAT DEBUG] DB Error: ${dbError ? JSON.stringify(dbError) : "none"}`);
+    console.log(`[CHAT DEBUG] Products found: ${productos?.length ?? "null"}`);
+
+    // Build inventory context
     const inventarioTexto = productos
       ?.map((p: any) => {
         const vencimiento = p.fecha_vencimiento
