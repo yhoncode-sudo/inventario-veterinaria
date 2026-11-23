@@ -74,7 +74,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-[10px] text-[var(--muted)]">
-          Desarrollado por Cristi Tovar & Anyi Rojas
+          Desarrollado por Cristi Tovar
         </p>
       </div>
     </div>

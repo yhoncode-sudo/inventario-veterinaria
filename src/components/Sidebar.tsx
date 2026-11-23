@@ -28,7 +28,7 @@ export default function Sidebar() {
         </h1>
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-[var(--muted)] text-right leading-tight">
-            Cristi Tovar<br />Anyi Rojas
+            Cristi Tovar
           </span>
           <button onClick={cerrarSesion} className="text-xs text-red-500 px-2 py-1 rounded-lg bg-red-50">
             Salir
