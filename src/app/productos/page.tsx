@@ -4,6 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase, type Producto, type Categoria } from "@/lib/supabase";
 
+function getSemaforoVencimiento(fechaVenc: string | null): { emoji: string; clase: string } | null {
+  if (!fechaVenc) return null;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const fecha = new Date(fechaVenc);
+  fecha.setHours(0, 0, 0, 0);
+  const dias = Math.ceil((fecha.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+  if (dias <= 0) return { emoji: "🔴", clase: "border-l-4 border-l-red-500" };
+  if (dias <= 15) return { emoji: "🔴", clase: "border-l-4 border-l-red-400" };
+  if (dias <= 30) return { emoji: "🟡", clase: "border-l-4 border-l-amber-400" };
+  if (dias <= 40) return { emoji: "🟢", clase: "border-l-4 border-l-green-400" };
+  return null;
+}
+
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -59,8 +73,10 @@ export default function ProductosPage() {
       </div>
       <p className="text-xs text-[var(--muted)]">{productosFiltrados.length} de {productos.length} productos</p>
       <div className="space-y-3">
-        {productosFiltrados.map((producto) => (
-          <div key={producto.id} className="bg-white rounded-xl border border-[var(--border)] overflow-hidden">
+        {productosFiltrados.map((producto) => {
+          const semaforo = getSemaforoVencimiento(producto.fecha_vencimiento);
+          return (
+          <div key={producto.id} className={`bg-white rounded-xl border border-[var(--border)] overflow-hidden ${semaforo?.clase || ""}`}>
             <div className="flex">
               <div className="w-24 h-24 flex-shrink-0 bg-gray-100 flex items-center justify-center overflow-hidden">
                 {producto.imagen_url ? (<img src={producto.imagen_url} alt={producto.nombre} className="w-full h-full object-cover" />) : (<span className="text-2xl opacity-30">📷</span>)}
@@ -91,11 +107,17 @@ export default function ProductosPage() {
                     </button>
                   )}
                 </div>
-                {producto.fecha_vencimiento && (<div className="text-[10px] text-[var(--muted)] mt-1">📅 Vence: {new Date(producto.fecha_vencimiento).toLocaleDateString("es-CO")}</div>)}
+                {producto.fecha_vencimiento && (
+                  <div className="text-[10px] mt-1 flex items-center gap-1">
+                    {semaforo && <span>{semaforo.emoji}</span>}
+                    <span className="text-[var(--muted)]">Vence: {new Date(producto.fecha_vencimiento).toLocaleDateString("es-CO")}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
       {productosFiltrados.length === 0 && (<div className="text-center py-12 text-[var(--muted)]"><span className="text-3xl block mb-2">🔍</span><p className="text-sm">No se encontraron productos</p></div>)}
     </div>

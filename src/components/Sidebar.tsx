@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "Inicio", icon: "📊" },
@@ -12,6 +12,12 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  function cerrarSesion() {
+    localStorage.removeItem("inventario_auth");
+    router.push("/login");
+  }
 
   return (
     <>
@@ -20,9 +26,14 @@ export default function Sidebar() {
         <h1 className="text-base font-bold text-[var(--primary)] flex items-center gap-2">
           🐾 Inventario Veterinaria
         </h1>
-        <span className="text-[10px] text-[var(--muted)] text-right leading-tight">
-          Cristi Tovar<br />Anyi Rojas
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] text-[var(--muted)] text-right leading-tight">
+            Cristi Tovar<br />Anyi Rojas
+          </span>
+          <button onClick={cerrarSesion} className="text-xs text-red-500 px-2 py-1 rounded-lg bg-red-50">
+            Salir
+          </button>
+        </div>
       </header>
 
       {/* Bottom Navigation */}

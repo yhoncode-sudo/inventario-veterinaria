@@ -31,18 +31,45 @@ export async function POST(req: NextRequest) {
     console.log(`[CHAT DEBUG] DB Error: ${dbError ? JSON.stringify(dbError) : "none"}`);
     console.log(`[CHAT DEBUG] Products found: ${productos?.length ?? "null"}`);
 
-    // Build inventory context
-    const inventarioTexto = productos
-      ?.map((p: any) => {
-        const vencimiento = p.fecha_vencimiento
-          ? `Vence: ${new Date(p.fecha_vencimiento).toLocaleDateString("es-CO")}`
-          : "Sin fecha de vencimiento";
-        return `- ${p.nombre} | Categoría: ${p.categorias?.nombre} | Stock: ${p.stock} unidades | Ubicación: ${p.ubicacion} | Precio: $${p.precio?.toLocaleString("es-CO")} COP | ${vencimiento} | SKU: ${p.sku} | Proveedor: ${p.proveedor || "N/A"}`;
-      })
-      .join("\n");
+    // Build inventory context with expiration analysis
+    const hoy = new Date();
+    const productosVencimiento: string[] = [];
+    const productosNormales: string[] = [];
+
+    productos?.forEach((p: any) => {
+      const vencimiento = p.fecha_vencimiento
+        ? `Vence: ${new Date(p.fecha_vencimiento).toLocaleDateString("es-CO")}`
+        : "Sin fecha de vencimiento";
+      
+      const linea = `- ${p.nombre} | Categoría: ${p.categorias?.nombre} | Stock: ${p.stock} unidades | Ubicación: ${p.ubicacion} | Precio: $${p.precio?.toLocaleString("es-CO")} COP | ${vencimiento} | SKU: ${p.sku} | Proveedor: ${p.proveedor || "N/A"}`;
+
+      if (p.fecha_vencimiento) {
+        const fechaVenc = new Date(p.fecha_vencimiento);
+        const diffMs = fechaVenc.getTime() - hoy.getTime();
+        const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDias <= 0) {
+          productosVencimiento.push(`🔴 VENCIDO (hace ${Math.abs(diffDias)} días): ${linea}`);
+        } else if (diffDias <= 15) {
+          productosVencimiento.push(`🔴 URGENTE (${diffDias} días): ${linea}`);
+        } else if (diffDias <= 30) {
+          productosVencimiento.push(`🟡 PRONTO (${diffDias} días): ${linea}`);
+        } else if (diffDias <= 40) {
+          productosVencimiento.push(`🟢 ATENCIÓN (${diffDias} días): ${linea}`);
+        } else {
+          productosNormales.push(linea);
+        }
+      } else {
+        productosNormales.push(linea);
+      }
+    });
+
+    const alertaVencimiento = productosVencimiento.length > 0
+      ? `\n\n⚠️ ALERTA DE VENCIMIENTO - Productos que requieren atención:\n${productosVencimiento.join("\n")}`
+      : "\n\n✅ No hay productos próximos a vencer (dentro de 40 días).";
 
     const systemPrompt = `Eres un asistente de inventario para una clínica veterinaria llamada "Inventario Veterinaria".
 Tu trabajo es responder preguntas sobre el inventario de productos de la clínica.
+La fecha de hoy es: ${hoy.toLocaleDateString("es-CO")}.
 
 Responde siempre en español, de forma amigable y concisa.
 Si te preguntan por un producto, da toda la información disponible: nombre, categoría, stock, ubicación, precio, fecha de vencimiento y proveedor.
@@ -50,8 +77,15 @@ Si te preguntan por cantidades, sé preciso con los números.
 Si te preguntan por productos que no existen en el inventario, dilo claramente.
 Puedes hacer resúmenes, comparaciones y recomendaciones basadas en los datos.
 
-Este es el inventario actual:
-${inventarioTexto}
+IMPORTANTE sobre vencimientos:
+- Los productos con 🔴 están vencidos o a punto de vencer (menos de 15 días). Recomienda descartarlos o venderlos con descuento URGENTE.
+- Los productos con 🟡 vencen en 15-30 días. Recomienda priorizar su venta.
+- Los productos con 🟢 vencen en 30-40 días. Señala que necesitan atención pronto.
+- Si el usuario pregunta por vencimientos, predicciones o qué productos mover primero, usa esta información para dar recomendaciones claras.
+${alertaVencimiento}
+
+Inventario completo:
+${productosNormales.join("\n")}
 
 Total de productos: ${productos?.length || 0}`;
 
